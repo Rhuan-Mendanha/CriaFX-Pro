@@ -1,0 +1,6 @@
+Updates applied
+===============
+- Restored original Particle Field (BackgroundVisualizer.tsx from V10 base): True
+- YouTube: Added searchPlayableVideoId() fallback resolver (lyrics/audio/visualizer) to avoid Error 150.
+- YouTube: useUnifiedPlayer now immediately falls back on error codes 150/101/2 and skips if no alternative found.
+- Equalizer: increased contrast in AdvancedEqualizer (dark mode readability).
