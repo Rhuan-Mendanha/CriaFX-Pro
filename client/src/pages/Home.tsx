@@ -23,7 +23,6 @@ export default function Home() {
   const [authOpen, setAuthOpen] = useState(false);
   const animationIdRef = useRef<number | null>(null);
 
-  // Expose toast globally for YouTube player errors
   useEffect(() => {
     (window as any).toast = toast;
   }, []);
@@ -41,9 +40,7 @@ export default function Home() {
           }
           setFrequencyData(idleData);
         }
-      } catch (err) {
-        // ignore
-      }
+      } catch {}
       animationIdRef.current = requestAnimationFrame(updateFrequency);
     };
 
@@ -74,18 +71,14 @@ export default function Home() {
     if (player.localPlayer.audioRef.current) {
       player.localPlayer.audioRef.current
         .play()
-        .then(() => {
-          player.localPlayer.audioRef.current?.pause();
-        })
+        .then(() => player.localPlayer.audioRef.current?.pause())
         .catch(() => {});
     }
   };
 
-  // Export handler for SettingsPanel
   const handleExport = async (format: ExportFormat) => {
     try {
       const anyPlayer = player as any;
-
       const exportFn =
         anyPlayer.exportAudio ||
         anyPlayer.exportCurrentTrack ||
@@ -99,16 +92,16 @@ export default function Home() {
 
       await exportFn(format);
       toast.success(`Export started: ${format.toUpperCase()}`);
-    } catch (e) {
+    } catch {
       toast.error('Failed to export audio.');
     }
   };
 
   return (
-    <div className="h-screen w-screen bg-background text-foreground overflow-hidden relative flex flex-col">
+    // ✅ remove overflow-hidden global so mobile can scroll inside main
+    <div className="h-[100dvh] w-screen bg-background text-foreground relative flex flex-col overflow-hidden">
       <WaveformVisualizer frequencyData={frequencyData} isPlaying={player.isPlaying} tracksCount={player.queue.length} />
 
-      {/* Interaction Overlay */}
       {needsInteraction && (
         <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
           <div className="max-w-md space-y-6">
@@ -128,13 +121,12 @@ export default function Home() {
         </div>
       )}
 
-      <div className="relative z-10 flex flex-col h-full w-full">
+      <div className="relative z-10 flex flex-col h-full w-full min-h-0">
         {player.localPlayer.audioRef && <audio ref={player.localPlayer.audioRef} crossOrigin="anonymous" />}
 
         {/* Header */}
         <header className="flex-none backdrop-blur-md bg-background/90 border-b border-border/50 shadow-sm z-[60]">
           <div className="max-w-[1920px] mx-auto">
-            {/* Top row */}
             <div className="flex items-center justify-between gap-2 px-4 md:px-6 py-3">
               <h1 className="text-xl md:text-2xl font-bold text-foreground dark:text-white md:bg-gradient-to-r md:from-primary md:to-primary/60 md:bg-clip-text md:text-transparent truncate">
                 CriaFX Pro
@@ -178,7 +170,6 @@ export default function Home() {
                   }}
                 />
 
-                {/* Perfil / Login */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -194,7 +185,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Search row (mobile only) */}
+            {/* Search rows */}
             <div className="md:hidden px-4 pb-3">
               <SearchBar
                 onTrackSelect={handleYouTubeTrackSelect}
@@ -202,7 +193,6 @@ export default function Home() {
               />
             </div>
 
-            {/* Search row (desktop) */}
             <div className="hidden md:block px-6 pb-3">
               <div className="max-w-2xl mx-auto">
                 <SearchBar
@@ -215,8 +205,9 @@ export default function Home() {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 grid grid-cols-1 lg:grid-cols-[320px_1fr_320px] gap-6 p-6 overflow-hidden z-10">
-          {/* Queue Sidebar */}
+        {/* ✅ make main scrollable on mobile, but keep desktop layout unchanged */}
+        <main className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[320px_1fr_320px] gap-4 md:gap-6 p-4 md:p-6 overflow-y-auto lg:overflow-hidden z-10">
+          {/* Queue Sidebar (desktop) */}
           <aside className="hidden lg:flex flex-col bg-card/50 backdrop-blur rounded-xl border border-border p-4 overflow-hidden">
             <h3 className="font-semibold mb-3 flex items-center gap-2 flex-none">
               <Music className="w-4 h-4" /> Queue ({player.queue.length})
@@ -271,39 +262,36 @@ export default function Home() {
           </aside>
 
           {/* Center Player */}
-          <section className="flex flex-col items-center justify-center gap-8 overflow-hidden relative z-20">
-            <div className="w-full max-w-md aspect-square bg-card/30 backdrop-blur-md rounded-2xl border border-border/50 shadow-2xl flex items-center justify-center overflow-hidden relative group flex-none">
-              {/* YouTube Player */}
+          <section className="flex flex-col items-center justify-start lg:justify-center gap-4 md:gap-6 overflow-visible relative z-20">
+            {/* ✅ smaller player on mobile */}
+            <div className="w-full max-w-md aspect-[4/3] sm:aspect-square bg-card/30 backdrop-blur-md rounded-2xl border border-border/50 shadow-2xl flex items-center justify-center overflow-hidden relative group flex-none">
               <div
                 className={`absolute inset-0 z-10 bg-black transition-opacity duration-500 ${
                   player.currentTrack?.sourceType === 'youtube' ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 }`}
               >
-                {/* ✅ stable id helps YT API bind consistently */}
                 <div id="youtube-player" ref={player.youtubeContainerRef} className="w-full h-full" />
               </div>
 
               {albumCoverUrl && player.currentTrack?.sourceType !== 'youtube' && (
-                <img
-                  src={albumCoverUrl}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
+                <img src={albumCoverUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
               )}
 
               {!albumCoverUrl && player.currentTrack?.sourceType !== 'youtube' && (
                 <div className="flex flex-col items-center gap-4 text-muted-foreground">
-                  <Music className="w-20 h-20 opacity-20" />
+                  <Music className="w-16 h-16 md:w-20 md:h-20 opacity-20" />
                   <p className="text-sm font-medium opacity-50">No track playing</p>
                 </div>
               )}
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6 z-20">
-                <h2 className="text-white font-bold text-xl truncate">{player.currentTrack?.title || 'CriaFX Pro'}</h2>
-                <p className="text-white/70 text-sm truncate">{player.currentTrack?.artist || 'Select a track'}</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 md:p-6 z-20">
+                <h2 className="text-white font-bold text-lg md:text-xl truncate">{player.currentTrack?.title || 'CriaFX Pro'}</h2>
+                <p className="text-white/70 text-xs md:text-sm truncate">{player.currentTrack?.artist || 'Select a track'}</p>
               </div>
             </div>
 
-            <div className="w-full max-w-2xl bg-card/80 backdrop-blur-xl p-6 rounded-2xl border border-border shadow-xl flex-none">
+            {/* ✅ slightly smaller padding on mobile */}
+            <div className="w-full max-w-2xl bg-card/80 backdrop-blur-xl p-4 md:p-6 rounded-2xl border border-border shadow-xl flex-none">
               <PlayerControls
                 isPlaying={player.isPlaying}
                 currentTime={player.currentTime}
@@ -324,34 +312,25 @@ export default function Home() {
               />
 
               {/* Mobile panels: Queue + Equalizer */}
-              <div className="w-full max-w-2xl lg:hidden flex flex-col gap-3 mt-4 px-2">
+              <div className="w-full max-w-2xl lg:hidden flex flex-col gap-3 mt-4">
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant={mobileTab === 'queue' ? 'default' : 'secondary'}
-                    className="flex-1"
-                    onClick={() => setMobileTab('queue')}
-                  >
+                  <Button variant={mobileTab === 'queue' ? 'default' : 'secondary'} className="flex-1" onClick={() => setMobileTab('queue')}>
                     Queue ({player.queue.length})
                   </Button>
-                  <Button
-                    variant={mobileTab === 'eq' ? 'default' : 'secondary'}
-                    className="flex-1"
-                    onClick={() => setMobileTab('eq')}
-                  >
+                  <Button variant={mobileTab === 'eq' ? 'default' : 'secondary'} className="flex-1" onClick={() => setMobileTab('eq')}>
                     Equalizer
                   </Button>
                 </div>
 
+                {/* ✅ Give internal scrolling area a stable height so it can scroll */}
                 {mobileTab === 'queue' && (
-                  <div className="bg-card/70 backdrop-blur rounded-xl border border-border p-4">
-                    <div className="max-h-[38vh] overflow-y-auto scrollbar-thin space-y-2 pr-1">
+                  <div className="bg-card/70 backdrop-blur rounded-xl border border-border p-3">
+                    <div className="max-h-[45dvh] overflow-y-auto scrollbar-thin space-y-2 pr-1">
                       {player.queue.map((track) => (
                         <div
                           key={track.id}
                           className={`group p-3 rounded-lg border transition-all cursor-pointer flex items-center gap-2 ${
-                            player.currentTrack?.id === track.id
-                              ? 'bg-primary/20 border-primary/50'
-                              : 'bg-background/50 hover:bg-foreground/5 border-border/50'
+                            player.currentTrack?.id === track.id ? 'bg-primary/20 border-primary/50' : 'bg-background/50 hover:bg-foreground/5 border-border/50'
                           }`}
                           onClick={() => player.playTrack(track)}
                         >
@@ -378,7 +357,7 @@ export default function Home() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="w-7 h-7 opacity-100 flex-none"
+                            className="w-8 h-8 opacity-100 flex-none"
                             onClick={(e) => {
                               e.stopPropagation();
                               player.removeFromQueue(track.id);
@@ -393,21 +372,23 @@ export default function Home() {
                 )}
 
                 {mobileTab === 'eq' && (
-                  <div className="bg-card/70 backdrop-blur rounded-xl border border-border p-4">
-                    <SmartEqualizer
-                      canUse={player.canUseEqualizer}
-                      settings={player.localPlayer.equalizerSettings}
-                      onBandChange={player.localPlayer.updateEqualizerBand}
-                      onIntensityChange={player.localPlayer.updateEqualizerIntensity}
-                      onToggle={player.localPlayer.toggleEqualizer}
-                    />
+                  <div className="bg-card/70 backdrop-blur rounded-xl border border-border p-3">
+                    <div className="max-h-[45dvh] overflow-y-auto scrollbar-thin pr-1">
+                      <SmartEqualizer
+                        canUse={player.canUseEqualizer}
+                        settings={player.localPlayer.equalizerSettings}
+                        onBandChange={player.localPlayer.updateEqualizerBand}
+                        onIntensityChange={player.localPlayer.updateEqualizerIntensity}
+                        onToggle={player.localPlayer.toggleEqualizer}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
             </div>
           </section>
 
-          {/* Equalizer Sidebar */}
+          {/* Equalizer Sidebar (desktop) */}
           <aside className="hidden lg:flex flex-col bg-card/50 backdrop-blur rounded-xl border border-border p-6 overflow-hidden">
             <SmartEqualizer
               canUse={player.canUseEqualizer}
@@ -419,7 +400,6 @@ export default function Home() {
           </aside>
         </main>
 
-        {/* Settings + Auth */}
         <SettingsPanel onExport={handleExport} />
         <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       </div>
