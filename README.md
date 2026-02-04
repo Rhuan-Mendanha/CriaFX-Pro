@@ -68,9 +68,9 @@ Access: http://localhost:3000
 
 ---
 
-## 📸 Screenshots
+## 📸 App Effects
 
-![Mirrored Bars Effect](https://via.placeholder.com/800x400/1a1a1a/ffffff?text=Mirrored+Frequency+Bars)
+![Effect](assets/Screen%20Recording%202026-02-03%20220628.mp4)
 
 ---
 
