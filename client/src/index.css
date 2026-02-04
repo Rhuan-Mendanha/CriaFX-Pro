@@ -199,3 +199,12 @@
     scrollbar-color: hsl(var(--foreground) / 0.2) transparent;
   }
 }
+/* Mobile UX improvements */
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+  }
+  .mobile-full {
+    width: 100% !important;
+  }
+}
