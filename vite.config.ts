@@ -10,6 +10,23 @@ import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 // Writes browser logs directly to files, trimmed when exceeding size limit
 // =============================================================================
 
+function copy404Plugin(): Plugin {
+  return {
+    name: 'copy-404',
+    closeBundle() {
+      const source = path.resolve(import.meta.dirname, 'client/public/404.html');
+      const dest = path.resolve(import.meta.dirname, 'dist/public/404.html');
+      
+      if (fs.existsSync(source)) {
+        fs.copyFileSync(source, dest);
+        console.log('✅ 404.html copied to dist/public/');
+      } else {
+        console.warn('⚠️  404.html not found in client/public/');
+      }
+    }
+  };
+}
+
 const PROJECT_ROOT = import.meta.dirname;
 const LOG_DIR = path.join(PROJECT_ROOT, ".manus-logs");
 const MAX_LOG_SIZE_BYTES = 1 * 1024 * 1024; // 1MB per log file
@@ -149,7 +166,7 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const plugins = [react(), tailwindcss(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), copy404Plugin()];
 
 export default defineConfig({
   plugins,

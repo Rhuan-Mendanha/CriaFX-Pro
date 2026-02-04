@@ -5,11 +5,10 @@ import type { Track } from '@/hooks/useMusicPlayer';
 import { PlayerControls } from '@/components/PlayerControls';
 import { SmartEqualizer } from '@/components/SmartEqualizer';
 import { WaveformVisualizer } from '@/components/WaveformVisualizer';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { SettingsButton } from '@/components/SettingsButton';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { SearchBar } from '@/components/SearchBar';
-import { Music, FolderOpen, Youtube, X, PlayCircle } from 'lucide-react';
+import { Music, FolderOpen, Youtube, X, PlayCircle, User } from 'lucide-react';
 import { toast } from 'sonner';
 import type { StreamingTrack } from '@/config/streaming';
 
@@ -18,6 +17,8 @@ export default function Home() {
   const [frequencyData, setFrequencyData] = useState<Uint8Array>(new Uint8Array(128).fill(30));
   const [albumCoverUrl, setAlbumCoverUrl] = useState<string>('');
   const [needsInteraction, setNeedsInteraction] = useState(true);
+  const [mobileTab, setMobileTab] = useState<'queue' | 'eq'>('queue');
+  const [authOpen, setAuthOpen] = useState(false);
   const animationIdRef = useRef<number | null>(null);
 
   // Expose toast globally for YouTube player errors
@@ -93,24 +94,82 @@ export default function Home() {
 
         {/* Header */}
         <header className="flex-none backdrop-blur-md bg-background/90 border-b border-border/50 shadow-sm z-[60]">
-          <div className="flex items-center justify-between px-6 py-3 max-w-[1920px] mx-auto">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent w-48">CriaFX Pro</h1>
-            <div className="flex-1 flex justify-center px-4 max-w-2xl relative z-[70]">
-              <SearchBar onTrackSelect={handleYouTubeTrackSelect} onAddToQueue={(t) => player.addToQueue(player.convertStreamingTrack(t))} />
-            </div>
-            <div className="w-48 flex items-center justify-end gap-2">
-              <Button variant="ghost" size="icon" onClick={() => document.querySelector<HTMLInputElement>('#folder-input')?.click()} className="border border-border rounded-full w-9 h-9">
-                <FolderOpen className="w-5 h-5" />
-              </Button>
-              <input id="folder-input" type="file" webkitdirectory="" directory="" multiple className="hidden" onChange={(e) => {
-                const files = Array.from(e.target.files || []).filter(f => f.type.startsWith('audio/') || f.name.match(/\.(mp3|wav|ogg|m4a|flac)$/i));
-                if (files.length === 0) return toast.error('No audio files found');
-                handleTracksSelected(files.map((f, i) => ({ id: `local-${Date.now()}-${i}`, name: f.name.replace(/\.[^/.]+$/, ''), url: URL.createObjectURL(f), artist: 'Local File' })));
-              }} />
-              <SettingsButton /><ThemeToggle />
-            </div>
-          </div>
-        </header>
+  <div className="max-w-[1920px] mx-auto">
+    {/* Top row */}
+    <div className="flex items-center justify-between gap-2 px-4 md:px-6 py-3">
+      <h1 className="text-xl md:text-2xl font-bold text-foreground dark:text-white md:bg-gradient-to-r md:from-primary md:to-primary/60 md:bg-clip-text md:text-transparent truncate">
+        CriaFX Pro
+      </h1>
+
+      <div className="flex items-center gap-2 flex-none">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => document.querySelector<HTMLInputElement>('#folder-input')?.click()}
+          className="border border-border rounded-full w-9 h-9"
+          aria-label="Import folder"
+        >
+          <FolderOpen className="w-5 h-5" />
+        </Button>
+
+        <input
+          id="folder-input"
+          type="file"
+          webkitdirectory=""
+          directory=""
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            const files = Array.from(e.target.files || []).filter(
+              (f) => f.type.startsWith('audio/') || f.name.match(/\.(mp3|wav|ogg|m4a|flac)$/i)
+            );
+            if (files.length === 0) return toast.error('No audio files found');
+            handleTracksSelected(
+              files.map((f, i) => ({
+                id: `local-${Date.now()}-${i}`,
+                name: f.name.replace(/\.[^/.]+$/, ''),
+                url: URL.createObjectURL(f),
+                artist: 'Local File',
+              }))
+            );
+          }}
+        />
+
+        {/* Perfil / Login */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="border border-border rounded-full w-9 h-9"
+          onClick={() => setAuthOpen(true)}
+          aria-label="User profile / login"
+          title="Perfil / Login"
+        >
+          <User className="w-5 h-5" />
+        </Button>
+
+        <SettingsButton />
+      </div>
+    </div>
+
+    {/* Search row (mobile only) */}
+    <div className="md:hidden px-4 pb-3">
+      <SearchBar
+        onTrackSelect={handleYouTubeTrackSelect}
+        onAddToQueue={(t) => player.addToQueue(player.convertStreamingTrack(t))}
+      />
+    </div>
+
+    {/* Search row (desktop) */}
+    <div className="hidden md:block px-6 pb-3">
+      <div className="max-w-2xl mx-auto">
+        <SearchBar
+          onTrackSelect={handleYouTubeTrackSelect}
+          onAddToQueue={(t) => player.addToQueue(player.convertStreamingTrack(t))}
+        />
+      </div>
+    </div>
+  </div>
+</header>
 
         {/* Main Content */}
         <main className="flex-1 grid grid-cols-1 lg:grid-cols-[320px_1fr_320px] gap-6 p-6 overflow-hidden z-10">
@@ -159,7 +218,87 @@ export default function Home() {
             </div>
             <div className="w-full max-w-2xl bg-card/80 backdrop-blur-xl p-6 rounded-2xl border border-border shadow-xl flex-none">
               <PlayerControls isPlaying={player.isPlaying} currentTime={player.currentTime} duration={player.duration} volume={player.volume} onPlayPause={player.togglePlayPause} onNext={player.nextTrack} onPrevious={player.previousTrack} onSeek={player.seek} onVolumeChange={player.setVolume} isShuffle={player.localPlayer.isShuffle} onToggleShuffle={() => player.localPlayer.setIsShuffle(!player.localPlayer.isShuffle)} repeatMode={player.localPlayer.repeatMode} onToggleRepeat={() => { const modes: ('off' | 'one' | 'all')[] = ['off', 'one', 'all']; player.localPlayer.setRepeatMode(modes[(modes.indexOf(player.localPlayer.repeatMode) + 1) % modes.length]); }} />
+            
+{/* Mobile panels: Queue + Equalizer */}
+<div className="w-full max-w-2xl lg:hidden flex flex-col gap-3 mt-4 px-2">
+  <div className="flex items-center gap-2">
+    <Button
+      variant={mobileTab === 'queue' ? 'default' : 'secondary'}
+      className="flex-1"
+      onClick={() => setMobileTab('queue')}
+    >
+      Queue ({player.queue.length})
+    </Button>
+    <Button
+      variant={mobileTab === 'eq' ? 'default' : 'secondary'}
+      className="flex-1"
+      onClick={() => setMobileTab('eq')}
+    >
+      Equalizer
+    </Button>
+  </div>
+
+  {mobileTab === 'queue' && (
+    <div className="bg-card/70 backdrop-blur rounded-xl border border-border p-4">
+      <div className="max-h-[38vh] overflow-y-auto scrollbar-thin space-y-2 pr-1">
+        {player.queue.map((track) => (
+          <div
+            key={track.id}
+            className={`group p-3 rounded-lg border transition-all cursor-pointer flex items-center gap-2 ${
+              player.currentTrack?.id === track.id
+                ? 'bg-primary/20 border-primary/50'
+                : 'bg-background/50 hover:bg-foreground/5 border-border/50'
+            }`}
+            onClick={() => player.playTrack(track)}
+          >
+            <div className="relative w-10 h-10 flex-none">
+              {track.albumCover ? (
+                <img src={track.albumCover} className="w-full h-full object-cover rounded" />
+              ) : (
+                <div className="w-full h-full bg-muted rounded flex items-center justify-center">
+                  <Music className="w-5 h-5 opacity-20" />
+                </div>
+              )}
+              {track.sourceType === 'youtube' && (
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-background rounded-full flex items-center justify-center border border-border">
+                  <Youtube className="w-2.5 h-2.5 text-red-500" />
+                </div>
+              )}
             </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{track.title}</p>
+              <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
+            </div>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="w-7 h-7 opacity-100 flex-none"
+              onClick={(e) => {
+                e.stopPropagation();
+                player.removeFromQueue(track.id);
+              }}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {mobileTab === 'eq' && (
+    <div className="bg-card/70 backdrop-blur rounded-xl border border-border p-4">
+      <SmartEqualizer
+        canUse={player.canUseEqualizer}
+        settings={player.localPlayer.equalizerSettings}
+        onBandChange={player.localPlayer.updateEqualizerBand}
+        onIntensityChange={player.localPlayer.updateEqualizerIntensity}
+        onToggle={player.localPlayer.toggleEqualizer}
+      />
+    </div>
+  )}
+</div>
+</div>
           </section>
 
           {/* Equalizer Sidebar */}
