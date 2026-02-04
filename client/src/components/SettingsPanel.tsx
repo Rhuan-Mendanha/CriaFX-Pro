@@ -27,8 +27,10 @@ export function SettingsPanel({ onExport }: SettingsPanelProps) {
   const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<Tab>('appearance');
 
+  // Export state
   const [exportFormat, setExportFormat] = useState<ExportFormat>('wav');
 
+  // Local state for color editing
   const [editingDarkColors, setEditingDarkColors] = useState(darkModeColors.colors);
   const [editingLightColors, setEditingLightColors] = useState(lightModeColors.colors);
 
@@ -54,15 +56,23 @@ export function SettingsPanel({ onExport }: SettingsPanelProps) {
   ];
 
   return (
-    // ✅ z-[999] makes settings ALWAYS above header (header is z-[60])
-    <div className="fixed inset-0 z-[999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      {/* ✅ mobile safe space so header never overlaps close button */}
-      <div className="bg-card rounded-xl border border-border w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl mt-10 sm:mt-0">
+    // ✅ overlay closes modal on click outside
+    <div
+      className="fixed inset-0 z-[999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={() => setIsSettingsOpen(false)}
+      role="dialog"
+      aria-modal="true"
+    >
+      {/* ✅ stopPropagation prevents closing when clicking inside modal */}
+      <div
+        className="bg-card rounded-xl border border-border w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl mt-10 sm:mt-0"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-border relative">
           <h2 className="text-2xl font-bold text-foreground">Settings</h2>
 
-          {/* ✅ close button with even higher z to be always clickable */}
+          {/* ✅ always clickable */}
           <button
             onClick={() => setIsSettingsOpen(false)}
             className="p-2 hover:bg-foreground/10 rounded-lg transition-colors relative z-[1000]"
@@ -95,6 +105,7 @@ export function SettingsPanel({ onExport }: SettingsPanelProps) {
           {/* Appearance Tab */}
           {activeTab === 'appearance' && (
             <div className="space-y-6">
+              {/* Theme moved into settings */}
               <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-background/40">
                 <div>
                   <p className="font-medium">Tema</p>
