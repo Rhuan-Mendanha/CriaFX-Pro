@@ -2,6 +2,28 @@
 <html lang="en">
 
   <head>
+
+    <script>
+      // GitHub Pages SPA fix: restores the original URL after 404.html redirect
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var p = params.get("p");
+        var q = params.get("q");
+
+        if (p !== null) {
+          var base = "/CriaFX-Pro/";
+          var newPath = base + decodeURIComponent(p);
+          var newSearch = q ? "?" + decodeURIComponent(q) : "";
+
+          window.history.replaceState(
+            null,
+            "",
+            newPath + newSearch + window.location.hash
+          );
+        }
+      })();
+    </script>
+
     <meta charset="UTF-8" />
     <meta
       name="viewport"
@@ -20,7 +42,7 @@
         }
       }(window.location))
     </script>
-    
+
     <!-- THIS IS THE START OF A COMMENT BLOCK, BLOCK TO BE DELETED: Google Fonts here, example:
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
