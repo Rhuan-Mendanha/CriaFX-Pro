@@ -14,7 +14,7 @@ type Tab = 'appearance' | 'waves' | 'export' | 'account';
 
 export function SettingsPanel({ onExport }: SettingsPanelProps) {
   const { isSettingsOpen, setIsSettingsOpen, visualizerStyle, setVisualizerStyle, darkModeColors, lightModeColors, setDarkModeColors, setLightModeColors } = useSettings();
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<Tab>('appearance');
   const [isLogin, setIsLogin] = useState(true);
   const [exportFormat, setExportFormat] = useState<ExportFormat>('wav');
@@ -81,6 +81,20 @@ export function SettingsPanel({ onExport }: SettingsPanelProps) {
         <div className="flex-1 overflow-y-auto p-6">
           {/* Appearance Tab */}
           {activeTab === 'appearance' && (
+<div className="flex items-center justify-between p-3 rounded-lg border border-border bg-background/40">
+  <div>
+    <p className="font-medium">Tema</p>
+    <p className="text-sm text-muted-foreground">Alternar claro/escuro</p>
+  </div>
+  <Button
+    variant="secondary"
+    onClick={() => toggleTheme?.()}
+    disabled={!toggleTheme}
+  >
+    {theme === 'dark' ? 'Escuro' : 'Claro'}
+  </Button>
+</div>
+
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-semibold mb-4">Customize Wave Colors</h3>
