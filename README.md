@@ -70,7 +70,7 @@ Access: http://localhost:3000
 
 ## 📸 App Effects
 
-![Effect](assets/Screen%20Recording%202026-02-03%20220628.mp4)
+![Effect](assets/Screen%20Recording%202026-02-03%20220628.gif)
 
 ---
 
