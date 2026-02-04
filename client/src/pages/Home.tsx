@@ -86,7 +86,6 @@ export default function Home() {
     try {
       const anyPlayer = player as any;
 
-      // Try common names without breaking TS
       const exportFn =
         anyPlayer.exportAudio ||
         anyPlayer.exportCurrentTrack ||
@@ -107,11 +106,7 @@ export default function Home() {
 
   return (
     <div className="h-screen w-screen bg-background text-foreground overflow-hidden relative flex flex-col">
-      <WaveformVisualizer
-        frequencyData={frequencyData}
-        isPlaying={player.isPlaying}
-        tracksCount={player.queue.length}
-      />
+      <WaveformVisualizer frequencyData={frequencyData} isPlaying={player.isPlaying} tracksCount={player.queue.length} />
 
       {/* Interaction Overlay */}
       {needsInteraction && (
@@ -284,7 +279,8 @@ export default function Home() {
                   player.currentTrack?.sourceType === 'youtube' ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 }`}
               >
-                <div ref={player.youtubeContainerRef} className="w-full h-full" />
+                {/* ✅ stable id helps YT API bind consistently */}
+                <div id="youtube-player" ref={player.youtubeContainerRef} className="w-full h-full" />
               </div>
 
               {albumCoverUrl && player.currentTrack?.sourceType !== 'youtube' && (
